@@ -13,6 +13,10 @@ type KeyMap struct {
 	Filter      key.Binding
 	ClearFilter key.Binding
 
+	// Keybindings used for moving an item in the list.
+	MoveUp   key.Binding
+	MoveDown key.Binding
+
 	// Keybindings used when setting a filter.
 	CancelWhileFiltering key.Binding
 	AcceptWhileFiltering key.Binding
@@ -40,14 +44,6 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("down", "j"),
 			key.WithHelp("↓/j", "down"),
 		),
-		// PrevPPPe: key.NewBinding(
-		// 	key.WithKeys("left", "h", "pgup", "b", "u"),
-		// 	key.WithHelp("←/h/pgup", "prev PPPe"),
-		// ),
-		// NextPPPe: key.NewBinding(
-		// 	key.WithKeys("right", "l", "pgdown", "f", "d"),
-		// 	key.WithHelp("→/l/pgdn", "next PPPe"),
-		// ),
 		GoToStart: key.NewBinding(
 			key.WithKeys("home", "g"),
 			key.WithHelp("g/home", "go to start"),
@@ -63,6 +59,16 @@ func DefaultKeyMap() KeyMap {
 		ClearFilter: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "clear filter"),
+		),
+
+		// Moving
+		MoveUp: key.NewBinding(
+			key.WithKeys("K"),
+			key.WithHelp("K", "move up"),
+		),
+		MoveDown: key.NewBinding(
+			key.WithKeys("J"),
+			key.WithHelp("J", "move down"),
 		),
 
 		// Filtering.

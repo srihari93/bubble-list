@@ -393,6 +393,22 @@ func (m *Model) SetItem(index int, item Item) tea.Cmd {
 	return cmd
 }
 
+// MoveItemUp method swaps the current item with the one above it in the list.
+func (m *Model) MoveItemUp(index int) {
+	if m.filterState == Unfiltered {
+		m.items = swapItemsInSlice(m.items, index, index-1)
+		m.CursorUp()
+	}
+}
+
+// MoveItemDown method swaps the current item with the one below it in the list.
+func (m *Model) MoveItemDown(index int) {
+	if m.filterState == Unfiltered {
+		m.items = swapItemsInSlice(m.items, index, index+1)
+		m.CursorDown()
+	}
+}
+
 // InsertItem inserts an item at the given index. If the index is out of the upper bound,
 // the item will be appended. This returns a command.
 func (m *Model) InsertItem(index int, item Item) tea.Cmd {
@@ -610,6 +626,8 @@ func (m Model) itemsAsFilterItems() filteredItems {
 func (m *Model) updateKeybindings() {
 	switch m.filterState {
 	case Filtering:
+		m.KeyMap.MoveUp.SetEnabled(false)
+		m.KeyMap.MoveDown.SetEnabled(false)
 		m.KeyMap.CursorUp.SetEnabled(false)
 		m.KeyMap.CursorDown.SetEnabled(false)
 		m.KeyMap.GoToStart.SetEnabled(false)
@@ -624,6 +642,8 @@ func (m *Model) updateKeybindings() {
 
 	default:
 		hasItems := len(m.items) != 0
+		m.KeyMap.MoveUp.SetEnabled(hasItems)
+		m.KeyMap.MoveDown.SetEnabled(hasItems)
 		m.KeyMap.CursorUp.SetEnabled(hasItems)
 		m.KeyMap.CursorDown.SetEnabled(hasItems)
 
@@ -738,9 +758,30 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmds = append(cmds, m.handleFiltering(msg))
 	} else {
 		cmds = append(cmds, m.handleBrowsing(msg))
+		cmds = append(cmds, m.handleMoving(msg))
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) handleMoving(msg tea.Msg) tea.Cmd {
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.KeyMap.MoveUp):
+			m.MoveItemUp(m.Index())
+
+		case key.Matches(msg, m.KeyMap.MoveDown):
+			m.MoveItemDown(m.Index())
+		}
+	}
+
+	cmd := m.delegate.Update(msg, m)
+	cmds = append(cmds, cmd)
+
+	return tea.Batch(cmds...)
 }
 
 // Updates for when a user is browsing the list.
@@ -792,13 +833,6 @@ func (m *Model) handleBrowsing(msg tea.Msg) tea.Cmd {
 
 	cmd := m.delegate.Update(msg, m)
 	cmds = append(cmds, cmd)
-
-	// TODO
-	// Keep the index in bounds when PPPinating
-	// itemsOnPPPe := m.PPPinator.ItemsOnPPPe(len(m.AvailableItems()))
-	// if m.cursor > itemsOnPPPe-1 {
-	// 	m.cursor = max(0, itemsOnPPPe-1)
-	// }
 
 	return tea.Batch(cmds...)
 }
@@ -896,6 +930,8 @@ func (m Model) FullHelp() [][]key.Binding {
 	kb := [][]key.Binding{{
 		m.KeyMap.CursorUp,
 		m.KeyMap.CursorDown,
+		m.KeyMap.MoveUp,
+		m.KeyMap.MoveDown,
 		m.KeyMap.GoToStart,
 		m.KeyMap.GoToEnd,
 	}}
@@ -1138,6 +1174,23 @@ func filterItems(m Model) tea.Cmd {
 
 		return FilterMatchesMsg(filterMatches)
 	}
+}
+
+func swapItemsInSlice(items []Item, firstIndex, secondIndex int) []Item {
+	if items == nil {
+		return items
+	}
+	maxIndex := len(items) - 1
+
+	firstIndex = setInBounds(firstIndex, 0, maxIndex)
+	secondIndex = setInBounds(secondIndex, 0, maxIndex)
+
+	items[firstIndex], items[secondIndex] = items[secondIndex], items[firstIndex]
+	return items
+}
+
+func setInBounds(x, low, high int) int {
+	return min(high, max(x, low))
 }
 
 func insertItemIntoSlice(items []Item, item Item, index int) []Item {
