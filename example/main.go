@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/srihari93/bubble-list"
+	list "github.com/srihari93/bubble-list"
 )
 
 var (
@@ -169,8 +167,6 @@ func (m model) View() string {
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
